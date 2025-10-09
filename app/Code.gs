@@ -1,23 +1,17 @@
 // ===============================================================
 // ✨ 설정 변수 ✨
-// 이 부분에 자신의 환경에 맞는 값을 정확히 입력해주세요.
+// 이 값들은 GitHub Actions의 Secrets를 통해 자동으로 설정됩니다.
 // ===============================================================
 
-
-// Google AI Studio (https://aistudio.google.com/)에서 발급받은 API 키를 입력하세요.
-const GEMINI_API_KEY = "<GEMINI_API_KEY_EXAMPLE>";
+// 스크립트 속성에서 환경 변수 로드
+const scriptProperties = PropertiesService.getScriptProperties();
+const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
+const GOOGLE_GROUP_EMAIL = scriptProperties.getProperty('GOOGLE_GROUP_EMAIL');
+const ADMIN_EMAIL = scriptProperties.getProperty('ADMIN_EMAIL');
+const CALENDAR_ID = scriptProperties.getProperty('CALENDAR_ID');
 
 // 사용할 모델에 맞춰 엔드포인트 URL을 설정하세요.
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent";
-
-// 이메일을 발송할 대상 Google Group의 이메일 주소를 입력하세요.
-const GOOGLE_GROUP_EMAIL = "<GOOGLE_GROUPS_EXAMPLE>@googlegroups.com";
-
-// 오류 발생 시 알림을 받을 관리자의 이메일 주소를 입력하세요.
-const ADMIN_EMAIL = "<GOOGLE_ADMIN_MAIL_EXAMPLE>@gmail.com";
-
-// Google Calendar 이벤트를 생성할 캘린더의 ID를 입력하세요. (예: 'primary' 또는 '...@group.calendar.google.com')
-const CALENDAR_ID = "<GOOGLE_GROUPS_CALENDAR_EXAMPLE>@group.calendar.google.com";
 
 
 
