@@ -9,9 +9,10 @@ const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
 const GOOGLE_GROUP_EMAIL = scriptProperties.getProperty('GOOGLE_GROUP_EMAIL');
 const ADMIN_EMAIL = scriptProperties.getProperty('ADMIN_EMAIL');
 const CALENDAR_ID = scriptProperties.getProperty('CALENDAR_ID');
+const GEMINI_API_URL = scriptProperties.getProperty('GEMINI_API_URL');
 
 // 사용할 모델에 맞춰 엔드포인트 URL을 설정하세요.
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent";
+// const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent";
 
 
 
