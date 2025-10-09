@@ -23,5 +23,18 @@ jobs:
     - name: Create .clasprc.json
       run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
 
+    - name: Set Script Properties from Secrets
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GEMINI_API_URL: ${{ secrets.GEMINI_API_URL }}
+        GOOGLE_GROUP_EMAIL: ${{ secrets.GOOGLE_GROUP_EMAIL }}
+        ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
+      run: |
+        clasp properties set GEMINI_API_KEY "$GEMINI_API_KEY"
+        clasp properties set GEMINI_API_URL "$GEMINI_API_URL"
+        clasp properties set GOOGLE_GROUP_EMAIL "$GOOGLE_GROUP_EMAIL"
+        clasp properties set ADMIN_EMAIL "$ADMIN_EMAIL"
+
     - name: Push to Google Apps Script
       run: clasp push -f
