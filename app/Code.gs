@@ -6,15 +6,28 @@
 // 스크립트 속성에서 환경 변수 로드
 const scriptProperties = PropertiesService.getScriptProperties();
 const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
+const GEMINI_API_URL = scriptProperties.getProperty('GEMINI_API_URL');
 const GOOGLE_GROUP_EMAIL = scriptProperties.getProperty('GOOGLE_GROUP_EMAIL');
 const ADMIN_EMAIL = scriptProperties.getProperty('ADMIN_EMAIL');
 const CALENDAR_ID = scriptProperties.getProperty('CALENDAR_ID');
-const GEMINI_API_URL = scriptProperties.getProperty('GEMINI_API_URL');
 
-// 사용할 모델에 맞춰 엔드포인트 URL을 설정하세요.
-// const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent";
-
-
+// ===============================================================
+// ⚙️ 스크립트 속성 설정 함수 (GitHub Actions에서 호출)
+// ===============================================================
+/**
+ * GitHub Actions에서 전달된 환경 변수를 스크립트 속성으로 설정합니다.
+ * @param {Object} properties 설정할 속성 키-값 쌍 객체
+ */
+function setScriptProperties(properties) {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  for (const key in properties) {
+    if (properties.hasOwnProperty(key)) {
+      scriptProperties.setProperty(key, properties[key]);
+      Logger.log(`스크립트 속성 설정: ${key} = ${properties[key].substring(0, 5)}...`);
+    }
+  }
+  Logger.log("모든 스크립트 속성이 성공적으로 설정되었습니다.");
+}
 
 
 // ===============================================================

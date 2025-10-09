@@ -20,7 +20,7 @@ jobs:
     - name: Install clasp
       run: npm install -g @google/clasp
 
-    - name: Create .clasprc.json
+    - name: Create .clasprc.json for authentication
       run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
 
     - name: Set Script Properties from Secrets
@@ -31,11 +31,7 @@ jobs:
         ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
         CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
       run: |
-        clasp property set GEMINI_API_KEY "$GEMINI_API_KEY"
-        clasp property set GEMINI_API_URL "$GEMINI_API_URL"
-        clasp property set GOOGLE_GROUP_EMAIL "$GOOGLE_GROUP_EMAIL"
-        clasp property set ADMIN_EMAIL "$ADMIN_EMAIL"
-        clasp property set CALENDAR_ID "$CALENDAR_ID"
+        clasp run setScriptProperties --parameters "{\"properties\": {\"GEMINI_API_KEY\": \"$GEMINI_API_KEY\", \"GEMINI_API_URL\": \"$GEMINI_API_URL\", \"GOOGLE_GROUP_EMAIL\": \"$GOOGLE_GROUP_EMAIL\", \"ADMIN_EMAIL\": \"$ADMIN_EMAIL\", \"CALENDAR_ID\": \"$CALENDAR_ID\"}}"
 
     - name: Push to Google Apps Script
       run: clasp push --force
