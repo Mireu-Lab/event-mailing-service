@@ -23,6 +23,9 @@ jobs:
     - name: Create .clasprc.json for authentication
       run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
 
+    - name: Checking .clasprc.json for authentication
+      run: cat '~/.clasprc.json'
+
     - name: Set Script Properties from Secrets
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
