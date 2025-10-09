@@ -28,7 +28,7 @@ jobs:
 
     - name: Set Script Properties from Secrets
       env:
-        CLASP_AUTH: ${{ github.workspace }}
+        clasp_config_auth: ${{ github.workspace }}/.clasprc.json
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GEMINI_API_URL: ${{ secrets.GEMINI_API_URL }}
         GOOGLE_GROUP_EMAIL: ${{ secrets.GOOGLE_GROUP_EMAIL }}
