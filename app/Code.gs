@@ -11,6 +11,11 @@ const GOOGLE_GROUP_EMAIL = scriptProperties.getProperty('GOOGLE_GROUP_EMAIL');
 const ADMIN_EMAIL = scriptProperties.getProperty('ADMIN_EMAIL');
 const CALENDAR_ID = scriptProperties.getProperty('CALENDAR_ID');
 
+// ⬇️ JavaScript로 렌더링되는 동적 웹사이트의 콘텐츠를 정확하게 가져오기 위한 외부 스크래핑 API 엔드포인트입니다.
+// 이 값은 GitHub Actions Secrets를 통해 설정해야 합니다.
+// 예시: 'https://api.scraperapi.com?api_key=YOUR_API_KEY&url=' 또는 'https://api.scrapingbee.com/v1/?api_key=YOUR_API_KEY&render_js=true&url='
+const SCRAPING_API_ENDPOINT = scriptProperties.getProperty('SCRAPING_API_ENDPOINT');
+
 // ===============================================================
 // ⚙️ 스크립트 속성 설정 함수 (GitHub Actions에서 호출)
 // ===============================================================
@@ -135,34 +140,29 @@ function callGeminiAPI(text) {
 **목적 :** 우리는 행사 웹사이트를 보고 상세한 검토을 통해 행사를 홍보하는 자원봉사 마케터이다.
 **목표 :** 주어진 텍스트가 '행사, 대회, 스터디 모집'과 관련이 있는지 먼저 판단하고, 관련이 있을 경우에만 지정된 형식으로 여러 사용자들에게 정보를 **한국어로** 제공하는 이메일 초안을 작성한다.
 
-
 # 1단계: 콘텐츠 관련성 판단
 주어진 텍스트가 '오프라인/온라인 행사, 대회, 컨퍼런스, 스터디, 연사자 모집' 중 하나와 명확하게 관련이 있는지 판단한다.
 - 관련이 있다면: isRelevant 값을 true로 설정한다.
 - 관련이 없다면 (예: 일반 뉴스, 블로그, 상품 판매 페이지): isRelevant 값을 false로 설정하고, 관련 없는 이유를 'reason'에 한국어로 간략히 작성한다.
 
-
 # 2단계: 이메일 작성 (콘텐츠가 관련 있는 경우에만)
 아래 형식과 우선순위를 반드시 지켜서 이메일 초안을 **한국어로** 작성한다.
-
 
 ## 제목 작성 형식
 |형식|설명|예시|
 |---|:---:|---|
-|ʻ[오프라인 행사]ʻ|외부활동 컨퍼런스 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|ʻ[오프라인 행사] - 미르 서버 오프라인 컨퍼런스ʻ|
-|ʻ[온라인 행사]ʻ|온라인 컨퍼런스 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|ʻ[온라인 행사] - 미르 서버 온라인 컨퍼런스ʻ|
-|ʻ[오프라인 대회]ʻ|오프라인 대회 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|ʻ[오프라인 대회] - 미르 서버 온라인 경진대회ʻ|
-|ʻ[온라인 대회]ʻ|온라인 대회 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|ʻ[온라인 대회] - 미르 서버 온라인 경진대회ʻ|
-|ʻ[연사자 모집]ʻ|컨퍼런스 준비위원회에서 진행하는 연사자 모집인경우|ʻ[연사자 모집] - 미르 서버 온라인 컨퍼런스 연사자 모집ʻ|
-|ʻ[스터티 공지]ʻ|행사가 특정 분야를 교육하는 것 인경우 (예시로 구글 스터디잼)|ʻ[스터티 공지] - 2025 구글 스터디잼 ML/DL 연구 스터티 공지ʻ|
-
+|\`[오프라인 행사]\`|외부활동 컨퍼런스 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|\`[오프라인 행사] - 미르 서버 오프라인 컨퍼런스\`|
+|\`[온라인 행사]\`|온라인 컨퍼런스 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|\`[온라인 행사] - 미르 서버 온라인 컨퍼런스\`|
+|\`[오프라인 대회]\`|오프라인 대회 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|\`[오프라인 대회] - 미르 서버 오프라인 경진대회\`|
+|\`[온라인 대회]\`|온라인 대회 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|\`[온라인 대회] - 미르 서버 온라인 경진대회\`|
+|\`[연사자 모집]\`|컨퍼런스 준비위원회에서 진행하는 연사자 모집인경우|\`[연사자 모집] - 미르 서버 온라인 컨퍼런스 연사자 모집\`|
+|\`[스터디 공지]\`|행사가 특정 분야를 교육하는 것 인경우 (예시로 구글 스터디잼)|\`[스터디 공지] - 2025 구글 스터디잼 ML/DL 연구 스터디 공지\`|
 
 ## 내용 작성 우선순위 및 주의사항
 1.  **주제:** 여러 세션이 있는 경우, 공통 주제를 함축하여 정리한다.
 2.  **일정:** **"일정: YYYY-MM-DD HH:MM (UTC+0)"** 형식으로 한 줄에 정확히 작성한다. 또한 **"안내된 시간은 UTC+0 기준이므로, 참여자의 위치에 따라 시간대를 직접 변환해야 합니다."** 라는 문구를 반드시 포함한다.
 3.  **지원 방법:** 운영측에서 제공하는 공식 웹사이트, 이메일 등의 지원 수단을 명시한다.
 4.  **운영자 연락망:** 운영측의 이메일 또는 소셜 네트워크 서비스 정보를 제공한다.
-
 
 ## 작성 예시 (이와 같은 스타일로 작성)
 \`\`\`
@@ -192,12 +192,10 @@ https://events.cncf.io/kubevirt-summit-virtual-2025/
 - 관련 있을 때: {"isRelevant": true, "title": "생성된 제목", "content": "HTML 줄바꿈(<br/>)을 포함한 생성된 내용"}
 - 관련 없을 때: {"isRelevant": false, "reason": "관련 없는 이유"}
 
-
 # 분석할 웹사이트 내용:
 ---
 ${text}
   `;
-
 
   const payload = { "contents": [{ "parts": [{"text": gemmaPrompt}] }] };
   const options = {
@@ -239,21 +237,48 @@ function generateGoogleCalendarLink(title, startTime, endTime, description) {
 function createCalendarEvent(title, startTime, endTime, description) {
   const calendar = CalendarApp.getCalendarById(CALENDAR_ID);
   calendar.createEvent(title, startTime, endTime, {
-    description: description.replace(/<br\s*\/?>/gi, '\n')
+    description: description.replace(/<br\\s*\\/?>/gi, '\n')
   });
 }
 
-
+/**
+ * 🕸️ URL의 웹 페이지를 가져와 텍스트를 추출하는 함수.
+ * JavaScript 렌더링을 처리하기 위해 외부 스크래핑 API를 사용합니다.
+ * @param {string} url 스크래핑할 URL
+ * @return {string} 추출된 텍스트
+ */
 function fetchAndParseURL(url) {
-  const response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
+  // SCRAPING_API_ENDPOINT가 설정되어 있는지 확인합니다.
+  // 이 변수는 동적 콘텐츠(JavaScript 렌더링)를 올바르게 가져오기 위해 필요합니다.
+  // 예: 'https://api.scraperapi.com?api_key=YOUR_API_KEY&url='
+  if (!SCRAPING_API_ENDPOINT) {
+    // API가 설정되지 않은 경우, 기존 방식으로 정적 HTML만 가져옵니다.
+    // 이 방식은 JavaScript로 동적으로 콘텐츠를 로드하는 사이트에서는 실패할 수 있습니다.
+    Logger.log("⚠️ SCRAPING_API_ENDPOINT가 설정되지 않았습니다. 정적 HTML만 가져옵니다.");
+    const response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
+    const html = response.getContentText();
+    return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  }
+
+  // 외부 스크래핑 API를 사용하여 URL 콘텐츠를 가져옵니다.
+  const fetchUrl = SCRAPING_API_ENDPOINT + encodeURIComponent(url);
+  Logger.log("스크래핑 API를 통해 URL을 가져옵니다: " + fetchUrl);
+  
+  const response = UrlFetchApp.fetch(fetchUrl, {'muteHttpExceptions': true});
+  const responseCode = response.getResponseCode();
   const html = response.getContentText();
+
+  if (responseCode !== 200) {
+    throw new Error(`스크래핑 API 호출 실패. URL: ${url}, 응답 코드: ${responseCode}, 메시지: ${html}`);
+  }
+
+  // HTML에서 불필요한 태그를 제거하고 텍스트만 추출합니다.
   return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
-
 function parseScheduleFromText(text) {
-  // "HH:MM PM/AM" 또는 "HH:MM" 24시간제 형식을 모두 처리
-  const match = text.match(/일정:\s*(\d{4}-\d{2}-\d{2})\s*(\d{1,2}:\d{2})\s*([AP]M)?/);
+  // "HH:MM PM/AM" 또는 "HH:MM" 24시간제 형식을 모두 처리하고 (UTC+0)을 명시적으로 확인
+  const match = text.match(/일정:\s*(\d{4}-\d{2}-\d{2})\s*(\d{1,2}:\d{2})\s*([AP]M)?\s*\(UTC\+0\)/i);
   if (match) {
     let hour = parseInt(match[2].split(':')[0], 10);
     const minute = match[2].split(':')[1];
