@@ -1,38 +1,20 @@
 // ===============================================================
 // ✨ 설정 변수 ✨
-// 이 값들은 GitHub Actions의 Secrets를 통해 자동으로 설정됩니다.
+// 이 부분에 자신의 환경에 맞는 값을 정확히 입력해주세요.
 // ===============================================================
 
-// 스크립트 속성에서 환경 변수 로드
 const scriptProperties = PropertiesService.getScriptProperties();
-const GEMINI_API_KEY = scriptProperties.getProperty('GEMINI_API_KEY');
-const GEMINI_API_URL = scriptProperties.getProperty('GEMINI_API_URL');
-const GOOGLE_GROUP_EMAIL = scriptProperties.getProperty('GOOGLE_GROUP_EMAIL');
-const ADMIN_EMAIL = scriptProperties.getProperty('ADMIN_EMAIL');
-const CALENDAR_ID = scriptProperties.getProperty('CALENDAR_ID');
 
-// ⬇️ JavaScript로 렌더링되는 동적 웹사이트의 콘텐츠를 정확하게 가져오기 위한 외부 스크래핑 API 엔드포인트입니다.
-// 이 값은 GitHub Actions Secrets를 통해 설정해야 합니다.
-// 예시: 'https://api.scraperapi.com?api_key=YOUR_API_KEY&url=' 또는 'https://api.scrapingbee.com/v1/?api_key=YOUR_API_KEY&render_js=true&url='
-const SCRAPING_API_ENDPOINT = scriptProperties.getProperty('SCRAPING_API_ENDPOINT');
-
-// ===============================================================
-// ⚙️ 스크립트 속성 설정 함수 (GitHub Actions에서 호출)
-// ===============================================================
-/**
- * GitHub Actions에서 전달된 환경 변수를 스크립트 속성으로 설정합니다.
- * @param {Object} properties 설정할 속성 키-값 쌍 객체
- */
-function setScriptProperties(properties) {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  for (const key in properties) {
-    if (properties.hasOwnProperty(key)) {
-      scriptProperties.setProperty(key, properties[key]);
-      Logger.log(`스크립트 속성 설정: ${key} = ${properties[key].substring(0, 5)}...`);
-    }
-  }
-  Logger.log("모든 스크립트 속성이 성공적으로 설정되었습니다.");
-}
+// Google AI Studio (https://aistudio.google.com/)에서 발급받은 API 키를 입력하세요.
+const GEMINI_API_KEY = scriptProperties.getProperty("GEMINI_API_KEY"); 
+// 사용할 모델에 맞춰 엔드포인트 URL을 설정하세요.
+const GEMINI_API_URL = scriptProperties.getProperty("GEMINI_API_URL");
+// 이메일을 발송할 대상 Google Group의 이메일 주소를 입력하세요.
+const GOOGLE_GROUP_EMAIL = scriptProperties.getProperty("GOOGLE_GROUP_EMAIL");
+// 오류 발생 시 알림을 받을 관리자의 이메일 주소를 입력하세요.
+const ADMIN_EMAIL = scriptProperties.getProperty("ADMIN_EMAIL");
+// Google Calendar 이벤트를 생성할 캘린더의 ID를 입력하세요. (예: 'primary' 또는 '...@group.calendar.google.com')
+const CALENDAR_ID = scriptProperties.getProperty("CALENDAR_ID");
 
 
 // ===============================================================
@@ -42,11 +24,11 @@ function setScriptProperties(properties) {
 function testOnFormSubmit() {
   const mockEvent = {
     response: {
-      getItemResponses: function() {
-        return [{
+      getItemResponses: function() { 
+        return [{ 
           // 여기에 테스트하고 싶은 실제 행사 URL을 입력하세요.
-          getResponse: function() { return "https://community.cncf.io/events/details/cncf-virtual-project-events-hosted-by-cncf-presents-kubevirt-summit-2025/"; }
-        }];
+          getResponse: function() { return "https://www.sebasiland.com/conferences/1799665063440395"; } 
+        }]; 
       },
       getRespondentEmail: function() { return "tester@example.com"; }
     }
@@ -54,7 +36,6 @@ function testOnFormSubmit() {
   // 실제 메인 로직을 가상 데이터로 실행합니다.
   onFormSubmit(mockEvent);
 }
-
 
 /**
  * 🚀 Google Form 제출 시 자동으로 실행되는 메인 함수입니다.
@@ -64,7 +45,6 @@ function onFormSubmit(e) {
   const respondentEmail = e.response ? e.response.getRespondentEmail() : '알 수 없음';
   let url = "";
 
-
   try {
     // 1. URL 가져오기 및 유효성 검사
     url = e.response.getItemResponses()[0].getResponse().trim();
@@ -73,60 +53,57 @@ function onFormSubmit(e) {
       throw new Error("제출된 URL 형식이 올바르지 않습니다.");
     }
 
-
     // 2. 웹 페이지 텍스트 추출
     const rawText = fetchAndParseURL(url);
-    if (!rawText || rawText.trim().length < 50) {
+    Logger.log(rawText)
+    if (!rawText || rawText.trim().length < 50) { // 내용이 너무 짧으면 유의미한 정보가 없다고 판단
       throw new Error("URL에서 유의미한 텍스트 콘텐츠를 추출할 수 없었습니다.");
     }
 
-
     // 3. Gemini AI를 호출하여 콘텐츠 검증 및 한국어 이메일 생성
     const generatedContent = callGeminiAPI(rawText);
-   
+    
     // 4. AI가 콘텐츠가 관련 없다고 판단한 경우 예외 처리
     if (!generatedContent.isRelevant) {
       throw new Error(`AI가 판단한 관련 없는 콘텐츠입니다. (사유: ${generatedContent.reason})`);
     }
 
-
     const emailSubject = generatedContent.title;
     const emailBody = generatedContent.content;
     Logger.log("AI가 생성한 제목: " + emailSubject);
-
 
     // 5. 이메일 본문에서 일정 정보 파싱 및 캘린더 작업
     const scheduleInfo = parseScheduleFromText(emailBody);
     let eventLink = "";
 
-
     if (scheduleInfo.start) {
+      // 5-1. 사용자가 자신의 캘린더에 추가할 수 있는 링크 생성
       eventLink = generateGoogleCalendarLink(emailSubject, scheduleInfo.start, scheduleInfo.end, emailBody);
+      // 5-2. (핵심 기능) 지정된 중앙 캘린더에 일정을 자동으로 기록
       createCalendarEvent(emailSubject, scheduleInfo.start, scheduleInfo.end, emailBody);
-      Logger.log("캘린더 이벤트 생성 및 링크 생성을 완료했습니다.");
+      Logger.log(`'${CALENDAR_ID}' 캘린더에 이벤트를 자동으로 기록했습니다.`);
     } else {
       Logger.log("본문에서 일정을 찾지 못해 캘린더 관련 작업을 건너뜁니다.");
     }
-   
-    const finalEmailBody = eventLink
+    
+    // 6. 최종 이메일 본문 조립 (캘린더 링크가 생성된 경우에만 포함)
+    const finalEmailBody = eventLink 
       ? `${emailBody}<br/><br/><b>🗓️ <a href="${eventLink}">Google Calendar에 추가하기</a></b>`
       : emailBody;
 
-
-    // 7. Google Group으로 이메일 발송
+    // 7. Google Group으로 이메일(게시물) 발송
     MailApp.sendEmail({
       to: GOOGLE_GROUP_EMAIL, subject: emailSubject, htmlBody: finalEmailBody
     });
-    Logger.log(`'${GOOGLE_GROUP_EMAIL}'으로 이메일을 성공적으로 발송했습니다.`);
-
+    Logger.log(`'${GOOGLE_GROUP_EMAIL}'으로 공지를 성공적으로 게시했습니다.`);
 
   } catch (error) {
+    // 8. 모든 단계에서 오류 발생 시 관리자에게 알림
     const errorMessage = `${error.message}\n\n오류 발생 URL: ${url}`;
     Logger.log(errorMessage);
     notifyAdmin(errorMessage, respondentEmail);
   }
 }
-
 
 /**
  * 🤖 Generative Language API (Gemini)를 호출하고 콘텐츠 검증 및 요약을 수행하는 함수.
@@ -151,12 +128,12 @@ function callGeminiAPI(text) {
 ## 제목 작성 형식
 |형식|설명|예시|
 |---|:---:|---|
-|\`[오프라인 행사]\`|외부활동 컨퍼런스 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|\`[오프라인 행사] - 미르 서버 오프라인 컨퍼런스\`|
-|\`[온라인 행사]\`|온라인 컨퍼런스 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|\`[온라인 행사] - 미르 서버 온라인 컨퍼런스\`|
-|\`[오프라인 대회]\`|오프라인 대회 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|\`[오프라인 대회] - 미르 서버 오프라인 경진대회\`|
-|\`[온라인 대회]\`|온라인 대회 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|\`[온라인 대회] - 미르 서버 온라인 경진대회\`|
-|\`[연사자 모집]\`|컨퍼런스 준비위원회에서 진행하는 연사자 모집인경우|\`[연사자 모집] - 미르 서버 온라인 컨퍼런스 연사자 모집\`|
-|\`[스터디 공지]\`|행사가 특정 분야를 교육하는 것 인경우 (예시로 구글 스터디잼)|\`[스터디 공지] - 2025 구글 스터디잼 ML/DL 연구 스터디 공지\`|
+|ʻ[오프라인 행사]ʻ|외부활동 컨퍼런스 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|ʻ[오프라인 행사] - 미르 서버 오프라인 컨퍼런스ʻ|
+|ʻ[온라인 행사]ʻ|온라인 컨퍼런스 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|ʻ[온라인 행사] - 미르 서버 온라인 컨퍼런스ʻ|
+|ʻ[오프라인 대회]ʻ|오프라인 대회 인경우 (장소가 마련되어있거나 또는 계획중인 경우)|ʻ[오프라인 대회] - 미르 서버 온라인 경진대회ʻ|
+|ʻ[온라인 대회]ʻ|온라인 대회 인경우 (장소가 마련되어있지 않고 영상 또는 라이브를 통해 시청해야하는 경우)|ʻ[온라인 대회] - 미르 서버 온라인 경진대회ʻ|
+|ʻ[연사자 모집]ʻ|컨퍼런스 준비위원회에서 진행하는 연사자 모집인경우|ʻ[연사자 모집] - 미르 서버 온라인 컨퍼런스 연사자 모집ʻ|
+|ʻ[스터티 공지]ʻ|행사가 특정 분야를 교육하는 것 인경우 (예시로 구글 스터디잼)|ʻ[스터티 공지] - 2025 구글 스터디잼 ML/DL 연구 스터티 공지ʻ|
 
 ## 내용 작성 우선순위 및 주의사항
 1.  **주제:** 여러 세션이 있는 경우, 공통 주제를 함축하여 정리한다.
@@ -168,24 +145,18 @@ function callGeminiAPI(text) {
 \`\`\`
 KubeVirt Summit Virtual 2025는 10월 16일 (목) 12:00 PM – 4:00 PM (UTC+0)에 개최되는 온라인 컨퍼런스입니다.
 
-
 KubeVirt Summit은 KubeVirt의 모든 것을 선보이는 연례 온라인 컨퍼런스로, 새로운 기능 소개, 프로덕션 배포, 아키텍처 변경 제안, 심층 튜토리얼 등을 다룹니다.
 
-
-일정: 2025-10-16 12:00 (UTC+0)
+일정: 2025-10-16 12:00 PM (UTC+0)
 (안내된 시간은 UTC+0 기준이므로, 참여자의 위치에 따라 시간대를 직접 변환해야 합니다.)
-
 
 주요 토픽:
 - KubeVirt를 사용하여 자체 클라우드 구축
 - 프로덕션 규모의 KubeVirt 사용
-- 보안 및 워크로드 격리
-
 
 참가 링크:
 https://events.cncf.io/kubevirt-summit-virtual-2025/
 \`\`\`
-
 
 # 최종 출력 형식
 모든 결과를 아래 JSON 형식에 맞춰 단 하나의 JSON 객체로만 출력해야 한다.
@@ -202,16 +173,14 @@ ${text}
     'method': 'post', 'contentType': 'application/json', 'payload': JSON.stringify(payload),
     'headers': { 'X-goog-api-key': GEMINI_API_KEY }, 'muteHttpExceptions': true
   };
- 
+  
   const response = UrlFetchApp.fetch(GEMINI_API_URL, options);
   const responseCode = response.getResponseCode();
   const responseText = response.getContentText();
 
-
   if (responseCode !== 200) {
     throw new Error(`Gemini API 호출 실패. 응답 코드: ${responseCode}, 메시지: ${responseText}`);
   }
-
 
   try {
     const responseJson = JSON.parse(responseText);
@@ -223,9 +192,7 @@ ${text}
   }
 }
 
-
 // --- 이하 헬퍼 함수들 ---
-
 
 function generateGoogleCalendarLink(title, startTime, endTime, description) {
   const formatDateForUrl = (date) => date.toISOString().replace(/-|:|\.\d{3}/g, '');
@@ -233,71 +200,34 @@ function generateGoogleCalendarLink(title, startTime, endTime, description) {
   return url;
 }
 
-
 function createCalendarEvent(title, startTime, endTime, description) {
   const calendar = CalendarApp.getCalendarById(CALENDAR_ID);
   calendar.createEvent(title, startTime, endTime, {
-    description: description.replace(/<br\\s*\\/?>/gi, '\n')
+    description: description.replace(/<br\s*\/?>/gi, '\n')
   });
 }
 
-/**
- * 🕸️ URL의 웹 페이지를 가져와 텍스트를 추출하는 함수.
- * JavaScript 렌더링을 처리하기 위해 외부 스크래핑 API를 사용합니다.
- * @param {string} url 스크래핑할 URL
- * @return {string} 추출된 텍스트
- */
 function fetchAndParseURL(url) {
-  // SCRAPING_API_ENDPOINT가 설정되어 있는지 확인합니다.
-  // 이 변수는 동적 콘텐츠(JavaScript 렌더링)를 올바르게 가져오기 위해 필요합니다.
-  // 예: 'https://api.scraperapi.com?api_key=YOUR_API_KEY&url='
-  if (!SCRAPING_API_ENDPOINT) {
-    // API가 설정되지 않은 경우, 기존 방식으로 정적 HTML만 가져옵니다.
-    // 이 방식은 JavaScript로 동적으로 콘텐츠를 로드하는 사이트에서는 실패할 수 있습니다.
-    Logger.log("⚠️ SCRAPING_API_ENDPOINT가 설정되지 않았습니다. 정적 HTML만 가져옵니다.");
-    const response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
-    const html = response.getContentText();
-    return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
-  }
-
-  // 외부 스크래핑 API를 사용하여 URL 콘텐츠를 가져옵니다.
-  const fetchUrl = SCRAPING_API_ENDPOINT + encodeURIComponent(url);
-  Logger.log("스크래핑 API를 통해 URL을 가져옵니다: " + fetchUrl);
-  
-  const response = UrlFetchApp.fetch(fetchUrl, {'muteHttpExceptions': true});
-  const responseCode = response.getResponseCode();
+  const response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
   const html = response.getContentText();
-
-  if (responseCode !== 200) {
-    throw new Error(`스크래핑 API 호출 실패. URL: ${url}, 응답 코드: ${responseCode}, 메시지: ${html}`);
-  }
-
-  // HTML에서 불필요한 태그를 제거하고 텍스트만 추출합니다.
+  Logger.log(html)
   return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
 function parseScheduleFromText(text) {
-  // "HH:MM PM/AM" 또는 "HH:MM" 24시간제 형식을 모두 처리하고 (UTC+0)을 명시적으로 확인
-  const match = text.match(/일정:\s*(\d{4}-\d{2}-\d{2})\s*(\d{1,2}:\d{2})\s*([AP]M)?\s*\(UTC\+0\)/i);
+  const match = text.match(/일정:\s*(\d{4}-\d{2}-\d{2})\s*(\d{1,2}:\d{2})\s*([AP]M)?/);
   if (match) {
     let hour = parseInt(match[2].split(':')[0], 10);
     const minute = match[2].split(':')[1];
     const ampm = match[3];
 
-
-    if (ampm === 'PM' && hour < 12) {
-      hour += 12;
-    }
-    if (ampm === 'AM' && hour === 12) { // 12 AM is 00 hours
-      hour = 0;
-    }
-   
-    // ISO 8601 형식(YYYY-MM-DDTHH:mm:ssZ)으로 날짜 문자열 생성. 'Z'는 UTC를 의미.
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    
     const dateString = `${match[1]}T${hour.toString().padStart(2, '0')}:${minute}:00Z`;
     const startDate = new Date(dateString);
-   
-    if (isNaN(startDate.getTime())) { return { start: null, end: null }; } // 유효하지 않은 날짜인 경우
-
+    
+    if (isNaN(startDate.getTime())) return { start: null, end: null };
 
     const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
     return { start: startDate, end: endDate };
@@ -305,17 +235,14 @@ function parseScheduleFromText(text) {
   return { start: null, end: null };
 }
 
-
 function isValidUrl(urlString) {
   if (!urlString) return false;
   const urlRegex = new RegExp('^(https?:\\/\\/)?'+'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+'((\\d{1,3}\\.){3}\\d{1,3}))'+'(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+'(\\?[;&a-z\\d%_.~+=-]*)?'+'(\\#[-a-z\\d_]*)?$','i');
   return !!urlRegex.test(urlString);
 }
 
-
 function notifyAdmin(errorMessage, submitterEmail) {
   const subject = "⚠️ Google Form 자동화 스크립트 오류 발생";
   const body = `Google Form 자동화 처리 중 오류가 발생했습니다.<br/><br/><b>오류 내용:</b><pre style="background-color:#f5f5f5; padding:10px; border-radius:5px; white-space:pre-wrap;">${errorMessage}</pre><br/><b>정보 제출자:</b> ${submitterEmail}<br/><br/>확인 후 조치가 필요할 수 있습니다.`;
   MailApp.sendEmail(ADMIN_EMAIL, subject, "", {htmlBody: body});
 }
-
