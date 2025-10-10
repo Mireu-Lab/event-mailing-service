@@ -2,6 +2,8 @@ name: Deploy to Google Apps Script
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
 
@@ -21,13 +23,16 @@ jobs:
       run: npm install -g @google/clasp
 
     - name: Create .clasprc.json for authentication
-      run: echo '${{ secrets.CLASPRC_JSON }}' > /home/runner/.clasprc.json
+      run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
 
     - name: 0. Google Apps Script Login Info
-      run: clasp show-authorized-user --auth /home/runner/.clasprc.json
+      run: clasp show-authorized-user
 
     - name: 1. Push code to Google Apps Script
-      run: clasp push -f --auth /home/runner/.clasprc.json
+      run: clasp push -f
+
+    - name: 2. Push code to Google Apps Script
+      run: clasp version "First version"
 
     - name: 2. Deploy a new version
-      run: clasp deploy --auth /home/runner/.clasprc.json 
+      run: clasp deploy
