@@ -33,5 +33,5 @@ jobs:
       run: |
         clasp run setScriptProperties --params "[{\"GEMINI_API_KEY\": \"$GEMINI_API_KEY\", \"GEMINI_API_URL\": \"$GEMINI_API_URL\", \"GOOGLE_GROUP_EMAIL\": \"$GOOGLE_GROUP_EMAIL\", \"ADMIN_EMAIL\": \"$ADMIN_EMAIL\", \"CALENDAR_ID\": \"$CALENDAR_ID\"}}]"
 
-    - name: Push to Google Apps Script
-      run: clasp push --force
+    - name: Deploy to Google Apps Script
+      run: clasp deploy --deploymentId AKfycbyqwJ5NP79Igwm0OHUxjJij_svIRiXMg7EXMH0cA00
