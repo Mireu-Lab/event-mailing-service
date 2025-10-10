@@ -24,7 +24,7 @@ jobs:
       run: echo '${{ secrets.CLASPRC_JSON }}' > /home/runner/.clasprc.json
 
     - name: 0. Google Apps Script Login Info
-      run: clasp show-authorized-user
+      run: clasp show-authorized-user --auth /home/runner/.clasprc.json
 
     - name: 1. Push code to Google Apps Script
       run: clasp push --auth /home/runner/.clasprc.json
