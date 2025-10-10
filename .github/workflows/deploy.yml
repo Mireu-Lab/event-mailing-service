@@ -1,12 +1,12 @@
 name: Deploy to Google Apps Script
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  deploy:
+  process:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -21,17 +21,10 @@ jobs:
       run: npm install -g @google/clasp
 
     - name: Create .clasprc.json for authentication
-      run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+      run: echo '${{ secrets.CLASPRC_JSON }}' > /home/runner/.clasprc.json
 
-    - name: Set Script Properties from Secrets
-      env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        GEMINI_API_URL: ${{ secrets.GEMINI_API_URL }}
-        GOOGLE_GROUP_EMAIL: ${{ secrets.GOOGLE_GROUP_EMAIL }}
-        ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-        CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
-      run: |
-        clasp run setScriptProperties --params "[{\"GEMINI_API_KEY\": \"$GEMINI_API_KEY\", \"GEMINI_API_URL\": \"$GEMINI_API_URL\", \"GOOGLE_GROUP_EMAIL\": \"$GOOGLE_GROUP_EMAIL\", \"ADMIN_EMAIL\": \"$ADMIN_EMAIL\", \"CALENDAR_ID\": \"$CALENDAR_ID\"}}]"
+    - name: 1. Push code to Google Apps Script
+      run: clasp push --auth /home/runner/.clasprc.json
 
-    - name: Push to Google Apps Script
-      run: clasp push --force
+    - name: 2. Deploy a new version
+      run: clasp deploy --auth /home/runner/.clasprc.json 

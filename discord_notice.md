@@ -23,3 +23,5 @@
 
 *   **메일링 그룹 가입하기:** [https://groups.google.com/g/ict-event](https://groups.google.com/g/ict-event)
 *   **새로운 행사/스터디 제보하기:** [https://forms.gle/kzbzqks6DF2T6uEZ9](https://forms.gle/kzbzqks6DF2T6uEZ9)
+
+*   **소스코드:** [https://github.com/Mireu-Lab/event-mailing-service](https://github.com/Mireu-Lab/event-mailing-service)
