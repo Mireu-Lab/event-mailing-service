@@ -1,0 +1,38 @@
+name: Deploy to Google Apps Script - Test
+
+# on:
+#   push:
+#     branches:
+#       - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install clasp
+      run: npm install -g @google/clasp
+
+    - name: Create .clasprc.json for authentication
+      run: echo '${{ secrets.CLASPRC_JSON }}' > ${{ github.workspace }}/.clasprc.json
+
+    - name: Checking .clasprc.json for authentication
+      run: cat '${{ github.workspace }}/.clasprc.json'
+
+    - name: Set Script Properties from Secrets
+      env:
+        clasp_config_auth: ${{ github.workspace }}/.clasprc.json
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GEMINI_API_URL: ${{ secrets.GEMINI_API_URL }}
+        GOOGLE_GROUP_EMAIL: ${{ secrets.GOOGLE_GROUP_EMAIL }}
+        ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
+      run: |
+        clasp run setScriptProperties --params "[{\"GEMINI_API_KEY\": \"$GEMINI_API_KEY\", \"GEMINI_API_URL\": \"$GEMINI_API_URL\", \"GOOGLE_GROUP_EMAIL\": \"$GOOGLE_GROUP_EMAIL\", \"ADMIN_EMAIL\": \"$ADMIN_EMAIL\", \"CALENDAR_ID\": \"$CALENDAR_ID\"}}]"
