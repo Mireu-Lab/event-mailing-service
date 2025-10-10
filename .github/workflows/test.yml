@@ -26,6 +26,9 @@ jobs:
     - name: Checking .clasprc.json for authentication
       run: cat '${{ github.workspace }}/.clasprc.json'
 
+    - name: Verify .clasprc.json content
+      run: cat ~/.clasprc.json
+
     - name: Set Script Properties from Secrets
       env:
         clasp_config_auth: ${{ github.workspace }}/.clasprc.json
