@@ -35,4 +35,4 @@ jobs:
         ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
         CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
       run: |
-        clasp run setScriptProperties --params "[{\"GEMINI_API_KEY\": \"$GEMINI_API_KEY\", \"GEMINI_API_URL\": \"$GEMINI_API_URL\", \"GOOGLE_GROUP_EMAIL\": \"$GOOGLE_GROUP_EMAIL\", \"ADMIN_EMAIL\": \"$ADMIN_EMAIL\", \"CALENDAR_ID\": \"$CALENDAR_ID\"}}]"
+        clasp --auth /home/runner/.clasprc.json run setScriptProperties --params "[{\"GEMINI_API_KEY\": \"$GEMINI_API_KEY\", \"GEMINI_API_URL\": \"$GEMINI_API_URL\", \"GOOGLE_GROUP_EMAIL\": \"$GOOGLE_GROUP_EMAIL\", \"ADMIN_EMAIL\": \"$ADMIN_EMAIL\", \"CALENDAR_ID\": \"$CALENDAR_ID\"}}]"
