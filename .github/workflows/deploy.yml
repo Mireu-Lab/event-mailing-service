@@ -1,9 +1,9 @@
 name: Deploy to Google Apps Script
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   deploy:

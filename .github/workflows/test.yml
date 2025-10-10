@@ -1,9 +1,9 @@
 name: Deploy to Google Apps Script - Test
 
-# on:
-#   push:
-#     branches:
-#       - dev
+on:
+  push:
+    branches:
+      - dev
 
 jobs:
   deploy:
