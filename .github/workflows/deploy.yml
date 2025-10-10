@@ -27,7 +27,7 @@ jobs:
       run: clasp show-authorized-user --auth /home/runner/.clasprc.json
 
     - name: 1. Push code to Google Apps Script
-      run: clasp push --auth /home/runner/.clasprc.json
+      run: clasp push -f --auth /home/runner/.clasprc.json
 
     - name: 2. Deploy a new version
       run: clasp deploy --auth /home/runner/.clasprc.json 
