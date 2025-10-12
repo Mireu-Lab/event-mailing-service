@@ -23,7 +23,7 @@ jobs:
       run: npm install -g @google/clasp
 
     - name: Create .clasprc.json for authentication
-      run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+      run: echo '${{ secrets.CLASPRC_JSON }}' > /home/runner/.clasprc.json
 
     - name: 0. Google Apps Script Login Info
       run: clasp show-authorized-user
