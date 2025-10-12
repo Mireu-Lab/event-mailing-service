@@ -93,7 +93,13 @@ function onFormSubmit(e) {
 
     // 7. Google Group으로 이메일(게시물) 발송
     MailApp.sendEmail({
-      to: GOOGLE_GROUP_EMAIL, subject: emailSubject, htmlBody: finalEmailBody
+      to: GOOGLE_GROUP_EMAIL, 
+      subject: emailSubject, 
+      htmlBody: finalEmailBody,
+      // 중요: 아래 'from'과 'name' 옵션을 사용하려면 스크립트를 실행하는 사용자의
+      // Gmail 설정에 GOOGLE_GROUP_EMAIL이 '다른 주소에서 메일 보내기'로 추가 및 인증되어 있어야 합니다.
+      from: GOOGLE_GROUP_EMAIL,
+      name: "ICT 행사 알림" // 그룹 이름 또는 원하는 발신자 이름으로 설정
     });
     Logger.log(`'${GOOGLE_GROUP_EMAIL}'으로 공지를 성공적으로 게시했습니다.`);
 
