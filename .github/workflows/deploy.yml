@@ -1,11 +1,8 @@
-name: Deploy to Google Apps Script
+name: Deploy to Google Apps Script on Release
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   deploy:
@@ -32,16 +29,13 @@ jobs:
       # --force 옵션은 원격 appsscript.json 파일을 덮어쓰기 위해 필요합니다.
       run: clasp push --force
 
-    - name: Create new version on tag push
-      # 태그가 푸시되었을 때만 이 단계를 실행합니다.
-      if: startsWith(github.ref, 'refs/tags/')
-      run: clasp create-version --description "Release ${{ github.ref_name }}"
+    - name: Create new version
+      # Release의 태그 이름과 제목을 사용하여 버전을 생성합니다.
+      run: clasp create-version --description "Release ${{ github.event.release.name }} (${{ github.ref_name }})"
 
-    - name: Create new deployment on tag push
-      # 태그가 푸시되었을 때만 이 단계를 실행합니다.
+    - name: Create new deployment
       # 이 명령은 매번 새로운 배포를 생성합니다.
       # 기존 배포를 업데이트하려면, DEPLOYMENT_ID 시크릿을 설정하고 아래 주석 처리된 명령을 사용하세요.
-      # run: clasp update-deployment ${{ secrets.DEPLOYMENT_ID }} --description "Release ${{ github.ref_name }}"
-      if: startsWith(github.ref, 'refs/tags/')
-      run: clasp create-deployment --description "Release ${{ github.ref_name }}"
+      # run: clasp update-deployment ${{ secrets.DEPLOYMENT_ID }} --description "Release ${{ github.event.release.name }} (${{ github.ref_name }})"
+      run: clasp create-deployment --description "Release ${{ github.event.release.name }} (${{ github.ref_name }})"
 
