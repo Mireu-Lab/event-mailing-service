@@ -211,7 +211,20 @@ function fetchAndParseURL(url) {
   const response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
   const html = response.getContentText();
   Logger.log(html)
-  return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
+  // JSON-LD 데이터 추출
+  const jsonLdData = extractJsonLd(html);
+  let jsonLdText = '';
+  if (jsonLdData.length > 0) {
+    jsonLdText = JSON.stringify(jsonLdData, null, 2);
+    Logger.log("추출된 JSON-LD 데이터: " + jsonLdText);
+  }
+
+  // 기존 텍스트 파싱 로직
+  const parsedText = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
+  // JSON-LD 데이터와 파싱된 텍스트를 결합하여 반환
+  return `${parsedText}\n\n${jsonLdText}`.trim();
 }
 
 function parseScheduleFromText(text) {
@@ -245,4 +258,24 @@ function notifyAdmin(errorMessage, submitterEmail) {
   const subject = "⚠️ Google Form 자동화 스크립트 오류 발생";
   const body = `Google Form 자동화 처리 중 오류가 발생했습니다.<br/><br/><b>오류 내용:</b><pre style="background-color:#f5f5f5; padding:10px; border-radius:5px; white-space:pre-wrap;">${errorMessage}</pre><br/><b>정보 제출자:</b> ${submitterEmail}<br/><br/>확인 후 조치가 필요할 수 있습니다.`;
   MailApp.sendEmail(ADMIN_EMAIL, subject, "", {htmlBody: body});
+}
+
+/**
+ * HTML 콘텐츠에서 JSON-LD 데이터를 추출하는 헬퍼 함수.
+ * @param {string} htmlContent HTML 문자열
+ * @return {Array<Object>} 추출된 JSON-LD 객체 배열
+ */
+function extractJsonLd(htmlContent) {
+  const jsonLd = [];
+  const scriptRegex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = scriptRegex.exec(htmlContent)) !== null) {
+    try {
+      const data = JSON.parse(match[1]);
+      jsonLd.push(data);
+    } catch (e) {
+      Logger.log("JSON-LD 파싱 오류: " + e.message);
+    }
+  }
+  return jsonLd;
 }
