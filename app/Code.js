@@ -210,7 +210,6 @@ function createCalendarEvent(title, startTime, endTime, description) {
 function fetchAndParseURL(url) {
   const response = UrlFetchApp.fetch(url, {'muteHttpExceptions': true});
   const html = response.getContentText();
-  Logger.log(html)
 
   // JSON-LD 데이터 추출
   const jsonLdData = extractJsonLd(html);
@@ -261,20 +260,21 @@ function notifyAdmin(errorMessage, submitterEmail) {
 }
 
 /**
- * HTML 콘텐츠에서 JSON-LD 데이터를 추출하는 헬퍼 함수.
+ * HTML 콘텐츠에서 JSON-LD 또는 일반 JSON 데이터를 추출하는 헬퍼 함수.
  * @param {string} htmlContent HTML 문자열
- * @return {Array<Object>} 추출된 JSON-LD 객체 배열
+ * @return {Array<Object>} 추출된 JSON 객체 배열
  */
 function extractJsonLd(htmlContent) {
   const jsonLd = [];
-  const scriptRegex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi;
+  // 'application/ld+json' 또는 'application/json' 타입의 스크립트 태그를 찾고, id와 같은 다른 속성을 허용합니다.
+  const scriptRegex = /<script[^>]*type="application\/(?:ld\+)?json"[^>]*>([\s\S]*?)<\/script>/gi;
   let match;
   while ((match = scriptRegex.exec(htmlContent)) !== null) {
     try {
       const data = JSON.parse(match[1]);
       jsonLd.push(data);
     } catch (e) {
-      Logger.log("JSON-LD 파싱 오류: " + e.message);
+      Logger.log("JSON 파싱 오류 (application/json): " + e.message);
     }
   }
   return jsonLd;
