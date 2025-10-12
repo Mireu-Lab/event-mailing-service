@@ -8,14 +8,14 @@ on:
       - 'v*'
 
 jobs:
-  process:
+  deploy:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '22'
 
@@ -25,14 +25,20 @@ jobs:
     - name: Create .clasprc.json for authentication
       run: echo '${{ secrets.CLASPRC_JSON }}' > /home/runner/.clasprc.json
 
-    - name: 0. Google Apps Script Login Info
-      run: clasp show-authorized-user
+    - name: Push files to Apps Script
+      # --force 옵션은 원격 appsscript.json 파일을 덮어쓰기 위해 필요합니다.
+      run: clasp push --force
 
-    - name: 1. Push code to Google Apps Script
-      run: clasp push -f
+    - name: Create new version on tag push
+      # 태그가 푸시되었을 때만 이 단계를 실행합니다.
+      if: startsWith(github.ref, 'refs/tags/')
+      run: clasp create-version --description "Release ${{ github.ref_name }}"
 
-    - name: 2. Push code to Google Apps Script
-      run: clasp version "First version"
+    - name: Create new deployment on tag push
+      # 태그가 푸시되었을 때만 이 단계를 실행합니다.
+      # 이 명령은 매번 새로운 배포를 생성합니다.
+      # 기존 배포를 업데이트하려면, DEPLOYMENT_ID 시크릿을 설정하고 아래 주석 처리된 명령을 사용하세요.
+      # run: clasp update-deployment ${{ secrets.DEPLOYMENT_ID }} --description "Release ${{ github.ref_name }}"
+      if: startsWith(github.ref, 'refs/tags/')
+      run: clasp create-deployment --description "Release ${{ github.ref_name }}"
 
-    - name: 2. Deploy a new version
-      run: clasp deploy
